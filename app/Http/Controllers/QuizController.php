@@ -14,6 +14,11 @@ use Illuminate\Support\Facades\DB;
 
 class QuizController extends Controller
 {
+    public function createForm()
+    {
+        return view('quiz-form');
+    }
+
     public function create(Request $request)
     {
         $name = $request->input('quizName');

@@ -1,6 +1,10 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\QuizController;
+use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\WelcomeController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,33 +18,33 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [WelcomeController::class, 'index']);
 
-Route::get('/dashboard', function () {
-    return view('dashboard')->with([
-        'quizzes' => \App\Http\Resources\QuizResource::collection(\App\Models\Quiz\Quiz::all())->toJson()
-    ]);
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
-Route::get('/create-quiz', function () {
-    return view('quiz-form');
-})->middleware(['auth', 'verified', 'admin'])->name('quiz-form');
+Route::get('/create-quiz', [QuizController::class, 'createForm'])
+    ->middleware(['auth', 'verified', 'admin'])
+    ->name('quiz-form');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    Route::get('/quiz/{quizId}', [\App\Http\Controllers\QuizController::class, 'showOne']);
+
+    Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
+    Route::patch('/settings', [SettingsController::class, 'update'])->name('settings.update');
+
+    Route::get('/quiz/{quizId}', [QuizController::class, 'showOne']);
 });
 
 Route::group(['prefix' => 'ajax', 'middleware' => ['auth']], function () {
-   Route::group(['prefix' => 'quiz'], function () {
-       Route::post('/', [\App\Http\Controllers\QuizController::class, 'create'])->middleware('admin');
-       Route::post('/start', [\App\Http\Controllers\QuizController::class, 'start']);
-       Route::post('/submit', [\App\Http\Controllers\QuizController::class, 'submit']);
-   });
+    Route::group(['prefix' => 'quiz'], function () {
+        Route::post('/', [QuizController::class, 'create'])->middleware('admin');
+        Route::post('/start', [QuizController::class, 'start']);
+        Route::post('/submit', [QuizController::class, 'submit']);
+    });
 });
 
 require __DIR__.'/auth.php';

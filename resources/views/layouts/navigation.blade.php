@@ -15,6 +15,9 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('settings.edit')" :active="request()->routeIs('settings.edit')">
+                        {{ __('Settings') }}
+                    </x-nav-link>
                     @if (\Illuminate\Support\Facades\Auth::user()->is_admin)
                         <x-nav-link :href="route('quiz-form')" :active="request()->routeIs('quiz-form')">
                             {{ __('Create Quiz') }}
@@ -83,6 +86,14 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('settings.edit')" :active="request()->routeIs('settings.edit')">
+                {{ __('Settings') }}
+            </x-responsive-nav-link>
+            @if (\Illuminate\Support\Facades\Auth::user()->is_admin)
+                <x-responsive-nav-link :href="route('quiz-form')" :active="request()->routeIs('quiz-form')">
+                    {{ __('Create Quiz') }}
+                </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->
