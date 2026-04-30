@@ -18,9 +18,15 @@
                     <x-nav-link :href="route('settings.edit')" :active="request()->routeIs('settings.edit')">
                         {{ __('Settings') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('top-scorers')" :active="request()->routeIs('top-scorers')">
+                        {{ __('Top Scorers') }}
+                    </x-nav-link>
                     @if (\Illuminate\Support\Facades\Auth::user()->is_admin)
                         <x-nav-link :href="route('quiz-form')" :active="request()->routeIs('quiz-form')">
                             {{ __('Create Quiz') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.history')" :active="request()->routeIs('admin.history')">
+                            {{ __('History') }}
                         </x-nav-link>
                     @endif
                 </div>
@@ -89,9 +95,15 @@
             <x-responsive-nav-link :href="route('settings.edit')" :active="request()->routeIs('settings.edit')">
                 {{ __('Settings') }}
             </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('top-scorers')" :active="request()->routeIs('top-scorers')">
+                {{ __('Top Scorers') }}
+            </x-responsive-nav-link>
             @if (\Illuminate\Support\Facades\Auth::user()->is_admin)
                 <x-responsive-nav-link :href="route('quiz-form')" :active="request()->routeIs('quiz-form')">
                     {{ __('Create Quiz') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.history')" :active="request()->routeIs('admin.history')">
+                    {{ __('History') }}
                 </x-responsive-nav-link>
             @endif
         </div>

@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\SessionController;
@@ -25,9 +27,20 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
+Route::get('/top-scorers', [LeaderboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('top-scorers');
+
 Route::get('/create-quiz', [QuizController::class, 'createForm'])
     ->middleware(['auth', 'verified', 'admin'])
     ->name('quiz-form');
+
+Route::middleware(['auth', 'verified', 'admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        Route::get('/history', [AdminController::class, 'history'])->name('history');
+    });
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

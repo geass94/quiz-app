@@ -226,6 +226,40 @@
     border-color: #fca5a5;
 }
 
+/* Admin history */
+.history-page {
+    padding: 1.5rem;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.history-table th,
+.history-table td {
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.history-table th {
+    font-weight: 600;
+    color: #374151;
+    background: #f9fafb;
+}
+
+.history-table .empty {
+    text-align: center;
+    color: #6b7280;
+    padding: 2rem 0;
+}
+
+.history-pagination {
+    margin-top: 1rem;
+}
+
 /* Util */
 .is-hidden {
     display: none;
