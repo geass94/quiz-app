@@ -32,7 +32,7 @@ class QuizData extends Data
                 ->where('user_id', Auth::id())
                 ->where('quiz_id', $quiz->id)
                 ->exists(),
-            questions: QuestionData::collect($quiz->questions, DataCollection::class),
+            questions: QuestionData::collection($quiz->questions),
         );
     }
 }
