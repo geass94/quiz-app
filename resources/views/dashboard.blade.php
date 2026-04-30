@@ -28,7 +28,8 @@
                 </div>
 
                 <div id="results-card" class="session-card is-hidden">
-                    <h2>Session complete</h2>
+                    <h2 id="result-heading">Session complete</h2>
+                    <p id="result-subheading" class="is-hidden">The timer ran out before you submitted.</p>
                     <p>Score: <strong><span id="result-score"></span> / <span id="result-total"></span></strong></p>
                     <p>Unanswered: <span id="result-unanswered"></span></p>
                     <p>Time spent: <span id="result-time"></span></p>
@@ -47,6 +48,7 @@
         let timeLeft = SESSION_DURATION;
         let intervalId = null;
         let questions = [];
+        let timedOut = false;
 
         const startCard = document.getElementById('start-card');
         const quizContainer = document.getElementById('quiz-container');
@@ -123,7 +125,14 @@
         }
 
         function renderTimer() {
-            timerEl.textContent = fmtTime(Math.max(timeLeft, 0));
+            const t = Math.max(timeLeft, 0);
+            timerEl.textContent = fmtTime(t);
+            timerEl.classList.remove('warn', 'danger');
+            if (t > 0 && t <= 10) {
+                timerEl.classList.add('danger');
+            } else if (t > 0 && t <= 30) {
+                timerEl.classList.add('warn');
+            }
         }
 
         function tickTimer() {
@@ -131,8 +140,17 @@
             renderTimer();
             if (timeLeft <= 0) {
                 clearInterval(intervalId);
+                timedOut = true;
+                disableAllAnswers();
+                submitButton.disabled = true;
                 submitSession();
             }
+        }
+
+        function disableAllAnswers() {
+            questionsContainer.querySelectorAll('.answer-button').forEach((b) => {
+                b.disabled = true;
+            });
         }
 
         async function onAnswerClick(e) {
@@ -190,6 +208,11 @@
                 });
                 const data = res.data.data;
                 hide(quizContainer);
+                document.getElementById('result-heading').textContent = timedOut
+                    ? "Time's up!"
+                    : 'Session complete';
+                const sub = document.getElementById('result-subheading');
+                if (timedOut) show(sub); else hide(sub);
                 document.getElementById('result-score').textContent = data.score;
                 document.getElementById('result-total').textContent = data.totalQuestions;
                 document.getElementById('result-unanswered').textContent = data.unanswered;

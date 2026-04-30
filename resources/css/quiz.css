@@ -50,6 +50,14 @@
     margin-bottom: 1rem;
 }
 
+.quiz-play .timer.warn {
+    color: #d97706;
+}
+
+.quiz-play .timer.danger {
+    color: #dc2626;
+}
+
 .question-container {
     margin-bottom: 1.5rem;
     padding: 1rem;
