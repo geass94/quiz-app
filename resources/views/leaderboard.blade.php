@@ -24,15 +24,16 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($rows as $i => $row)
+                            @forelse ($rows as $row)
                                 @php
                                     $timeSpent = max(\App\Models\Quiz\Quiz::SESSION_DURATION - (int) $row->time_left, 0);
                                     $h = (int) floor($timeSpent / 3600);
                                     $m = (int) floor(($timeSpent % 3600) / 60);
                                     $s = $timeSpent % 60;
+                                    $rank = ($rows->firstItem() ?? 1) + $loop->index;
                                 @endphp
                                 <tr>
-                                    <td>{{ $i + 1 }}</td>
+                                    <td>{{ $rank }}</td>
                                     <td>{{ $row->user?->name ?? '—' }}</td>
                                     <td>{{ $row->user?->email ?? '—' }}</td>
                                     <td>{{ $row->score }} / {{ $row->total_questions }}</td>
@@ -45,6 +46,10 @@
                             @endforelse
                         </tbody>
                     </table>
+
+                    @if ($rows->hasPages())
+                        <div class="history-pagination">{{ $rows->links() }}</div>
+                    @endif
                 </div>
             </div>
         </div>

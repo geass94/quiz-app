@@ -24,18 +24,8 @@ class Quiz extends Model
         'time',
     ];
 
-    public function setCompletedAttribute($value = false)
-    {
-        $this->attributes['completed'] = $value;
-    }
-
     public function questions()
     {
         return $this->hasMany(Question::class);
-    }
-
-    public function answers()
-    {
-        return $this->hasManyThrough(Answer::class, Question::class, '', '', '', '');
     }
 }

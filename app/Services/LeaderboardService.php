@@ -3,13 +3,13 @@
 namespace App\Services;
 
 use App\Models\UserQuiz;
-use Illuminate\Support\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class LeaderboardService
 {
-    public function topScorers(): Collection
+    public function topScorers(int $perPage = 20): LengthAwarePaginator
     {
-        return UserQuiz::query()
+        $best = UserQuiz::query()
             ->with('user')
             ->whereNotNull('submitted_at')
             ->orderByDesc('score')
@@ -17,5 +17,18 @@ class LeaderboardService
             ->get()
             ->unique('user_id')
             ->values();
+
+        $page = LengthAwarePaginator::resolveCurrentPage('page');
+
+        return new LengthAwarePaginator(
+            $best->forPage($page, $perPage)->values(),
+            $best->count(),
+            $perPage,
+            $page,
+            [
+                'path' => LengthAwarePaginator::resolveCurrentPath(),
+                'pageName' => 'page',
+            ]
+        );
     }
 }
