@@ -26,7 +26,7 @@ Route::get('/dashboard', function () {
 
 Route::get('/create-quiz', function () {
     return view('quiz-form');
-})->middleware(['auth', 'verified'])->name('quiz-form');
+})->middleware(['auth', 'verified', 'admin'])->name('quiz-form');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -37,7 +37,7 @@ Route::middleware('auth')->group(function () {
 
 Route::group(['prefix' => 'ajax', 'middleware' => ['auth']], function () {
    Route::group(['prefix' => 'quiz'], function () {
-       Route::post('/', [\App\Http\Controllers\QuizController::class, 'create']);
+       Route::post('/', [\App\Http\Controllers\QuizController::class, 'create'])->middleware('admin');
        Route::post('/start', [\App\Http\Controllers\QuizController::class, 'start']);
        Route::post('/submit', [\App\Http\Controllers\QuizController::class, 'submit']);
    });

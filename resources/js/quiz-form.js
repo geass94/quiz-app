@@ -92,7 +92,7 @@ form.addEventListener('submit', (event) => {
     };
 
     axios.post('/ajax/quiz', quiz).then(res => {
-        window.local.reload();
+        window.location.reload();
     }).catch(e => {
         console.log(e)
     })
