@@ -15,4 +15,7 @@ mix.js('resources/js/app.js', 'public/js')
     .js('resources/js/quiz-form.js', 'public/js')
     .postCss('resources/css/app.css', 'public/css', [
         //
+    ])
+    .postCss('resources/css/quiz.css', 'public/css', [
+        //
     ]);

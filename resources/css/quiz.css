@@ -1,0 +1,203 @@
+/* Shared button */
+.session-button,
+.quiz-form button {
+    padding: 0.5rem 1.25rem;
+    background: #1f2937;
+    color: white;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    border: none;
+    margin: 0.5rem 0.25rem 0;
+    font-size: 1rem;
+}
+
+.session-button:hover:not(:disabled),
+.quiz-form button:hover:not(:disabled) {
+    background: #374151;
+}
+
+.session-button:disabled,
+.quiz-form button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Session card (start / results) */
+.session-card {
+    padding: 2rem;
+    text-align: center;
+}
+
+.session-card h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.session-card p {
+    margin-bottom: 0.5rem;
+}
+
+/* Quiz play */
+.quiz-play {
+    padding: 1.5rem;
+}
+
+.quiz-play .timer {
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-align: right;
+    margin-bottom: 1rem;
+}
+
+.question-container {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.375rem;
+}
+
+.question-container .question {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.answer-button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    margin: 0.25rem 0;
+    padding: 0.5rem 0.75rem;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 0.25rem;
+    cursor: pointer;
+}
+
+.answer-button:hover:not(:disabled) {
+    background: #e5e7eb;
+}
+
+.answer-button.selected {
+    background: #2563eb;
+    color: white;
+    border-color: #2563eb;
+}
+
+.answer-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Quiz creation form */
+.quiz-form {
+    display: flex;
+    flex-direction: column;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+.quiz-form label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.quiz-form input[type="text"],
+.quiz-form input[type="number"],
+.quiz-form textarea,
+.quiz-form select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    background-color: #ffffff;
+    font-size: 1rem;
+    color: #1f2937;
+    box-sizing: border-box;
+}
+
+.quiz-form input:focus,
+.quiz-form textarea:focus,
+.quiz-form select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.quiz-form .question {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.375rem;
+    background: #f9fafb;
+}
+
+.quiz-form .wrapper {
+    margin-bottom: 0.75rem;
+}
+
+.quiz-form .answers {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.quiz-form .answer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.quiz-form .answer textarea {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.quiz-form .answer label {
+    margin-bottom: 0;
+    font-weight: 400;
+}
+
+/* Settings */
+.settings-card {
+    padding: 1.5rem;
+}
+
+.settings-card legend {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.settings-card .option {
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.settings-card .status {
+    color: #16a34a;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.settings-card .hint {
+    color: #6b7280;
+    font-size: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.settings-card .error {
+    color: #dc2626;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+/* Util */
+.is-hidden {
+    display: none;
+}

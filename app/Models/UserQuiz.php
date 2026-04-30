@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\Quiz\Quiz;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -11,16 +10,18 @@ class UserQuiz extends Model
     use HasFactory;
 
     protected $fillable = [
-        'quiz_id',
         'user_id',
+        'mode',
         'score',
         'time_left',
+        'total_questions',
+        'unanswered_count',
+        'submitted_at',
     ];
 
-    public function quiz()
-    {
-        return $this->belongsTo(Quiz::class);
-    }
+    protected $casts = [
+        'submitted_at' => 'datetime',
+    ];
 
     public function answers()
     {

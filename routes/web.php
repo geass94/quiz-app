@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizController;
+use App\Http\Controllers\SessionController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\WelcomeController;
 use Illuminate\Support\Facades\Route;
@@ -35,15 +36,14 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::patch('/settings', [SettingsController::class, 'update'])->name('settings.update');
-
-    Route::get('/quiz/{quizId}', [QuizController::class, 'showOne']);
 });
 
 Route::group(['prefix' => 'ajax', 'middleware' => ['auth']], function () {
-    Route::group(['prefix' => 'quiz'], function () {
-        Route::post('/', [QuizController::class, 'create'])->middleware('admin');
-        Route::post('/start', [QuizController::class, 'start']);
-        Route::post('/submit', [QuizController::class, 'submit']);
+    Route::post('/quiz', [QuizController::class, 'create'])->middleware('admin');
+
+    Route::group(['prefix' => 'session'], function () {
+        Route::post('/start', [SessionController::class, 'start']);
+        Route::post('/submit', [SessionController::class, 'submit']);
     });
 });
 

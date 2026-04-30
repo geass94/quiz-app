@@ -9,6 +9,10 @@ class Quiz extends Model
 {
     use HasFactory;
 
+    const SESSION_SIZE = 10;
+
+    const SESSION_DURATION = 300;
+
     const TYPES = [
         'BINARY' => 'BINARY',
         'MULTI' => 'MULTI',

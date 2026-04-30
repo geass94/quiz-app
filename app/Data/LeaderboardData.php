@@ -2,6 +2,7 @@
 
 namespace App\Data;
 
+use App\Models\Quiz\Quiz;
 use App\Models\UserQuiz;
 use Spatie\LaravelData\Data;
 
@@ -20,7 +21,7 @@ class LeaderboardData extends Data
             name: $userQuiz->user->name,
             email: $userQuiz->user->email,
             score: $userQuiz->score,
-            timeSpent: $userQuiz->quiz->time - $userQuiz->time_left,
+            timeSpent: Quiz::SESSION_DURATION - (int) $userQuiz->time_left,
         );
     }
 }

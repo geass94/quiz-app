@@ -1,54 +1,112 @@
 const form = document.querySelector('#quiz-form');
 const addQuestionBtn = document.querySelector('#add-question-btn');
 const questionsContainer = document.querySelector('#questions-container');
+const quizTypeSelect = document.querySelector('#quiz-type');
+
 let questionCount = 0;
+
+quizTypeSelect.dataset.lastValue = quizTypeSelect.value;
+
+quizTypeSelect.addEventListener('change', () => {
+    const existing = questionsContainer.querySelectorAll('.question');
+    if (existing.length > 0) {
+        const proceed = confirm('Changing the quiz type will clear all questions you have added. Continue?');
+        if (!proceed) {
+            quizTypeSelect.value = quizTypeSelect.dataset.lastValue;
+            return;
+        }
+        existing.forEach((q) => q.remove());
+        questionCount = 0;
+    }
+    quizTypeSelect.dataset.lastValue = quizTypeSelect.value;
+});
 
 addQuestionBtn.addEventListener('click', () => {
     questionCount++;
+    const type = quizTypeSelect.value;
 
     const questionDiv = document.createElement('div');
     questionDiv.classList.add('question');
-    const questionInputs = document.createElement('div');
-    questionInputs.classList.add('wrapper');
-    const questionLabel = document.createElement('label');
-    questionLabel.textContent = `Question ${questionCount}:`;
-    const questionInput = document.createElement('textarea');
-    // questionInput.type = 'text';
-    questionInput.name = `question${questionCount}`;
 
-    const answersDiv = document.createElement('div');
-    answersDiv.classList.add('answers');
+    const wrapper = document.createElement('div');
+    wrapper.classList.add('wrapper');
+    const label = document.createElement('label');
+    label.textContent = `Question ${questionCount}`;
+    const textarea = document.createElement('textarea');
+    textarea.name = `question${questionCount}`;
+    wrapper.appendChild(label);
+    wrapper.appendChild(textarea);
+    questionDiv.appendChild(wrapper);
 
-    const addAnswerBtn = document.createElement('button');
-    addAnswerBtn.type = 'button';
-    addAnswerBtn.textContent = 'Add Answer';
-    addAnswerBtn.addEventListener('click', () => {
-        const answerInput = document.createElement('textarea');
-        // answerInput.type = 'text';
-        answerInput.name = `answer${questionCount}[]`;
-
-        const isCorrectLabel = document.createElement('label');
-        isCorrectLabel.textContent = `Is Correct?:`;
-        const isCorrectInput = document.createElement('input');
-        isCorrectInput.type = 'radio';
-        isCorrectInput.name = `isCorrect${questionCount}[]`;
-
-        const answerDiv = document.createElement('div');
-        answerDiv.classList.add('answer');
-        answerDiv.appendChild(answerInput);
-        answerDiv.appendChild(isCorrectLabel);
-        answerDiv.appendChild(isCorrectInput);
-
-        answersDiv.appendChild(answerDiv);
-    });
-    questionInputs.appendChild(questionLabel);
-    questionInputs.appendChild(questionInput);
-    questionDiv.appendChild(questionInputs);
-    questionDiv.appendChild(answersDiv);
-    questionDiv.appendChild(addAnswerBtn);
+    if (type === 'BINARY') {
+        questionDiv.appendChild(buildBinaryAnswers(questionCount));
+    } else {
+        questionDiv.appendChild(buildMultiAnswers(questionCount));
+    }
 
     questionsContainer.appendChild(questionDiv);
 });
+
+function buildBinaryAnswers(idx) {
+    const wrap = document.createElement('div');
+    wrap.classList.add('answers');
+
+    const heading = document.createElement('label');
+    heading.textContent = 'Correct answer:';
+    wrap.appendChild(heading);
+
+    ['Yes', 'No'].forEach((opt, i) => {
+        const row = document.createElement('label');
+        row.classList.add('answer');
+
+        const input = document.createElement('input');
+        input.type = 'radio';
+        input.name = `correct${idx}`;
+        input.value = opt;
+        if (i === 0) input.checked = true;
+
+        row.appendChild(input);
+        row.appendChild(document.createTextNode(' ' + opt));
+        wrap.appendChild(row);
+    });
+
+    return wrap;
+}
+
+function buildMultiAnswers(idx) {
+    const wrap = document.createElement('div');
+    wrap.classList.add('answers');
+
+    const heading = document.createElement('label');
+    heading.textContent = 'Answers (fill 2 or 3, mark exactly one as correct):';
+    wrap.appendChild(heading);
+
+    for (let i = 0; i < 3; i++) {
+        const row = document.createElement('div');
+        row.classList.add('answer');
+
+        const ta = document.createElement('textarea');
+        ta.name = `answer${idx}_${i}`;
+        ta.rows = 1;
+        ta.placeholder = `Answer ${i + 1}`;
+
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = `correct${idx}`;
+        radio.value = String(i);
+        if (i === 0) radio.checked = true;
+
+        const radioLabel = document.createElement('label');
+        radioLabel.textContent = 'Correct';
+
+        row.appendChild(ta);
+        row.appendChild(radio);
+        row.appendChild(radioLabel);
+        wrap.appendChild(row);
+    }
+
+    return wrap;
+}
 
 form.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -58,42 +116,45 @@ form.addEventListener('submit', (event) => {
     const duration = form.elements.duration.value;
     const questions = [];
 
-    const questionDivs = document.querySelectorAll('.question');
-    questionDivs.forEach((questionDiv) => {
-        const questionText = questionDiv.querySelector('textarea').value;
+    questionsContainer.querySelectorAll('.question').forEach((qDiv) => {
+        const questionText = qDiv.querySelector('.wrapper textarea').value;
+        let answers;
 
-        const answerDivs = questionDiv.querySelectorAll('.answer');
-        const answers = [];
-        answerDivs.forEach((answerDiv) => {
-            const answerText = answerDiv.querySelector('textarea').value;
-            const isCorrect = answerDiv.querySelector('input[type="radio"]').checked;
+        if (quizType === 'BINARY') {
+            const checked = qDiv.querySelector('.answers input[type="radio"]:checked');
+            const correct = checked ? checked.value : 'Yes';
+            answers = [
+                { answer: 'Yes', isCorrect: correct === 'Yes' },
+                { answer: 'No', isCorrect: correct === 'No' },
+            ];
+        } else {
+            answers = [];
+            const checked = qDiv.querySelector('.answers input[type="radio"]:checked');
+            const correctIdx = checked ? parseInt(checked.value, 10) : -1;
+            qDiv.querySelectorAll('.answer textarea').forEach((ta, i) => {
+                const text = ta.value.trim();
+                if (text.length > 0) {
+                    answers.push({
+                        answer: text,
+                        isCorrect: i === correctIdx,
+                    });
+                }
+            });
+        }
 
-            const answer = {
-                answer: answerText,
-                isCorrect: isCorrect
-            };
-
-            answers.push(answer);
-        });
-
-        const question = {
-            question: questionText,
-            answers: answers
-        };
-
-        questions.push(question);
+        questions.push({ question: questionText, answers });
     });
 
-    const quiz = {
-        quizName: quizName,
-        quizType: quizType,
-        questions: questions,
-        duration: duration
-    };
+    const payload = { quizName, quizType, questions, duration };
 
-    axios.post('/ajax/quiz', quiz).then(res => {
+    axios.post('/ajax/quiz', payload).then((res) => {
+        if (res.data && res.data.error) {
+            alert(res.data.message || 'Could not save quiz.');
+            return;
+        }
         window.location.reload();
-    }).catch(e => {
-        console.log(e)
-    })
+    }).catch((e) => {
+        const msg = e?.response?.data?.message || 'Could not save quiz.';
+        alert(msg);
+    });
 });

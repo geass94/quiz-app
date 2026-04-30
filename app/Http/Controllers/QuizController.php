@@ -2,16 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Data\LeaderboardData;
-use App\Data\QuizData;
 use App\Models\Quiz\Answer;
 use App\Models\Quiz\Question;
 use App\Models\Quiz\Quiz;
-use App\Models\UserQuiz;
-use App\Models\UserQuizAnswer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Spatie\LaravelData\DataCollection;
 
 class QuizController extends Controller
 {
@@ -22,27 +17,68 @@ class QuizController extends Controller
 
     public function create(Request $request)
     {
-        $name = $request->input('quizName');
+        $request->validate([
+            'quizName' => 'required|string|max:255',
+            'quizType' => 'required|in:'.implode(',', Quiz::TYPES),
+            'duration' => 'nullable|integer|min:1',
+            'questions' => 'required|array|min:1',
+            'questions.*.question' => 'required|string',
+            'questions.*.answers' => 'required|array|min:1',
+            'questions.*.answers.*.answer' => 'required|string',
+            'questions.*.answers.*.isCorrect' => 'required|boolean',
+        ]);
+
         $type = $request->input('quizType');
         $questions = $request->input('questions');
-        logger($questions);
+
+        foreach ($questions as $i => $q) {
+            $count = count($q['answers']);
+            $correctCount = 0;
+            foreach ($q['answers'] as $a) {
+                if ($a['isCorrect']) {
+                    $correctCount++;
+                }
+            }
+
+            if ($correctCount !== 1) {
+                return response()->json([
+                    'error' => true,
+                    'message' => 'Question '.($i + 1).' must have exactly one correct answer.',
+                ], 422);
+            }
+
+            if ($type === Quiz::TYPES['BINARY'] && $count !== 2) {
+                return response()->json([
+                    'error' => true,
+                    'message' => 'Binary question '.($i + 1).' must have exactly 2 answers.',
+                ], 422);
+            }
+
+            if ($type === Quiz::TYPES['MULTI'] && ($count < 2 || $count > 3)) {
+                return response()->json([
+                    'error' => true,
+                    'message' => 'Multi-choice question '.($i + 1).' must have 2 or 3 answers.',
+                ], 422);
+            }
+        }
+
         try {
             DB::beginTransaction();
+
             $quiz = Quiz::create([
-                'name' => $name,
+                'name' => $request->input('quizName'),
                 'type' => $type,
-                'time' => $request->input('duration', 300),
+                'time' => $request->input('duration', Quiz::SESSION_DURATION),
             ]);
+
             foreach ($questions as $question) {
                 $q = Question::create([
                     'quiz_id' => $quiz->id,
+                    'type' => $type,
                     'content' => $question['question'],
                 ]);
-                if (! isset($question['answers'])) {
-                    throw new \Exception('Answers are not provided');
-                }
-                $answers = $question['answers'];
-                foreach ($answers as $answer) {
+
+                foreach ($question['answers'] as $answer) {
                     Answer::create([
                         'question_id' => $q->id,
                         'is_correct' => $answer['isCorrect'],
@@ -50,6 +86,7 @@ class QuizController extends Controller
                     ]);
                 }
             }
+
             DB::commit();
 
             return response()->json([
@@ -63,68 +100,7 @@ class QuizController extends Controller
             return response()->json([
                 'error' => true,
                 'message' => $e->getMessage(),
-            ]);
+            ], 500);
         }
-    }
-
-    public function start(Request $request)
-    {
-        $userQuiz = UserQuiz::updateOrCreate(['quiz_id' => $request->input('quizId'), 'user_id' => $request->user()->id], [
-            'quiz_id' => $request->input('quizId'),
-            'user_id' => $request->user()->id,
-        ]);
-
-        return response()->json([
-            'error' => false,
-            'message' => 'Good Luck!',
-            'data' => $userQuiz,
-        ]);
-    }
-
-    public function submit(Request $request)
-    {
-        $answers = $request->input('answeredQuestions', []);
-        $userQuiz = UserQuiz::query()->find($request->input('userQuizId'));
-        $quiz = $userQuiz->quiz;
-        $score = 0;
-        foreach ($answers as $answer) {
-            UserQuizAnswer::create([
-                'user_quiz_id' => $request->input('userQuizId'),
-                'answer_id' => $answer['answerId'],
-            ]);
-            if (Answer::isCorrect($answer['answerId'])) {
-                $score++;
-            }
-        }
-
-        $userQuiz->update([
-            'score' => $score,
-            'time_left' => $quiz->time - $request->input('timeSpent', 0),
-        ]);
-        logger('Leaderboard', [
-            'quizId' => $quiz->id,
-        ]);
-        $leaderboard = UserQuiz::query()
-            ->where('quiz_id', '=', $quiz->id)
-            ->orderByDesc('score')
-            ->orderByDesc('time_left')
-            ->get();
-
-        return response()->json([
-            'error' => false,
-            'message' => 'Submitted',
-            'data' => LeaderboardData::collection($leaderboard),
-        ]);
-    }
-
-    public function showOne(int $quizId)
-    {
-        $quiz = Quiz::query()->where('id', '=', $quizId)->with(['questions' => function ($q) {
-            return $q->with('answers');
-        }])->first();
-
-        return view('quiz')->with([
-            'quiz' => QuizData::from($quiz)->toJson(),
-        ]);
     }
 }
