@@ -42,31 +42,88 @@ class SessionController extends Controller
         ]);
     }
 
-    public function submit(Request $request)
+    public function answer(Request $request)
     {
+        $request->validate([
+            'sessionId' => 'required|integer',
+            'questionId' => 'required|integer',
+            'answerId' => 'required|integer',
+        ]);
+
         $session = UserQuiz::query()->findOrFail($request->input('sessionId'));
 
         if ($session->user_id !== $request->user()->id) {
             abort(403);
         }
 
-        $answers = $request->input('answeredQuestions', []);
-        $score = 0;
-        foreach ($answers as $answer) {
+        if ($session->submitted_at !== null) {
+            abort(409, 'Session already submitted');
+        }
+
+        $questionId = (int) $request->input('questionId');
+        $answerId = (int) $request->input('answerId');
+
+        $answer = Answer::query()->find($answerId);
+        if (! $answer || $answer->question_id !== $questionId) {
+            abort(422, 'Invalid answer');
+        }
+
+        $alreadyAnswered = UserQuizAnswer::query()
+            ->where('user_quiz_id', $session->id)
+            ->whereHas('answer', fn ($q) => $q->where('question_id', $questionId))
+            ->exists();
+
+        if (! $alreadyAnswered) {
             UserQuizAnswer::create([
                 'user_quiz_id' => $session->id,
-                'answer_id' => $answer['answerId'],
+                'answer_id' => $answerId,
             ]);
-            if (Answer::isCorrect($answer['answerId'])) {
-                $score++;
-            }
         }
+
+        $correctAnswer = Answer::query()
+            ->where('question_id', $questionId)
+            ->where('is_correct', true)
+            ->first();
+
+        return response()->json([
+            'error' => false,
+            'data' => [
+                'correct' => (bool) $answer->is_correct,
+                'correctAnswer' => $correctAnswer?->content,
+            ],
+        ]);
+    }
+
+    public function submit(Request $request)
+    {
+        $request->validate([
+            'sessionId' => 'required|integer',
+            'timeSpent' => 'nullable|integer|min:0',
+        ]);
+
+        $session = UserQuiz::query()->findOrFail($request->input('sessionId'));
+
+        if ($session->user_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        if ($session->submitted_at !== null) {
+            abort(409, 'Session already submitted');
+        }
+
+        $answers = UserQuizAnswer::query()
+            ->with('answer')
+            ->where('user_quiz_id', $session->id)
+            ->get();
+
+        $score = $answers->filter(fn ($a) => $a->answer && $a->answer->is_correct)->count();
+        $answeredCount = $answers->count();
 
         $timeSpent = (int) $request->input('timeSpent', 0);
         $session->update([
             'score' => $score,
             'time_left' => max(Quiz::SESSION_DURATION - $timeSpent, 0),
-            'unanswered_count' => max($session->total_questions - count($answers), 0),
+            'unanswered_count' => max($session->total_questions - $answeredCount, 0),
             'submitted_at' => now(),
         ]);
 

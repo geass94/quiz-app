@@ -47,7 +47,6 @@
         let timeLeft = SESSION_DURATION;
         let intervalId = null;
         let questions = [];
-        let answeredQuestions = [];
 
         const startCard = document.getElementById('start-card');
         const quizContainer = document.getElementById('quiz-container');
@@ -136,19 +135,48 @@
             }
         }
 
-        function onAnswerClick(e) {
-            const qid = e.target.dataset.questionId;
-            const aid = parseInt(e.target.dataset.answerId, 10);
+        async function onAnswerClick(e) {
+            const button = e.currentTarget;
+            const qid = parseInt(button.dataset.questionId, 10);
+            const aid = parseInt(button.dataset.answerId, 10);
 
-            const buttons = e.target.parentNode.querySelectorAll('.answer-button');
+            const buttons = button.parentNode.querySelectorAll('.answer-button');
             buttons.forEach((b) => {
                 b.disabled = true;
                 b.classList.remove('selected');
             });
-            e.target.classList.add('selected');
+            button.classList.add('selected');
 
-            answeredQuestions = answeredQuestions.filter((x) => String(x.questionId) !== String(qid));
-            answeredQuestions.push({ questionId: parseInt(qid, 10), answerId: aid });
+            try {
+                const res = await axios.post('/ajax/session/answer', {
+                    sessionId,
+                    questionId: qid,
+                    answerId: aid,
+                });
+                const data = res.data.data;
+                showFeedback(
+                    button.closest('.question-container'),
+                    !!data.correct,
+                    data.correctAnswer
+                );
+            } catch (err) {
+                console.log(err);
+            }
+        }
+
+        function showFeedback(container, isCorrect, correctText) {
+            let fb = container.querySelector('.feedback');
+            if (!fb) {
+                fb = document.createElement('div');
+                fb.className = 'feedback';
+                container.appendChild(fb);
+            }
+            fb.classList.remove('correct', 'wrong');
+            fb.classList.add(isCorrect ? 'correct' : 'wrong');
+            const right = correctText || '';
+            fb.textContent = isCorrect
+                ? `Correct! The right answer is ${right}.`
+                : `Sorry, you are wrong! The right answer is ${right}.`;
         }
 
         async function submitSession() {
@@ -158,7 +186,7 @@
             const timeSpent = SESSION_DURATION - Math.max(timeLeft, 0);
             try {
                 const res = await axios.post('/ajax/session/submit', {
-                    sessionId, timeSpent, answeredQuestions,
+                    sessionId, timeSpent,
                 });
                 const data = res.data.data;
                 hide(quizContainer);

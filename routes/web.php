@@ -43,6 +43,7 @@ Route::group(['prefix' => 'ajax', 'middleware' => ['auth']], function () {
 
     Route::group(['prefix' => 'session'], function () {
         Route::post('/start', [SessionController::class, 'start']);
+        Route::post('/answer', [SessionController::class, 'answer']);
         Route::post('/submit', [SessionController::class, 'submit']);
     });
 });
