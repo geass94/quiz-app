@@ -21,7 +21,7 @@ class QuestionData extends Data
         return new self(
             id: $question->id,
             question: $question->content,
-            answers: AnswerData::collect($question->answers, DataCollection::class),
+            answers: AnswerData::collection($question->answers),
         );
     }
 }
