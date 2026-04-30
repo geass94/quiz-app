@@ -14,20 +14,45 @@ class SessionController extends Controller
 {
     public function start(Request $request)
     {
+        $request->validate([
+            'questionIds' => 'nullable|array|max:'.Quiz::SESSION_SIZE,
+            'questionIds.*' => 'integer',
+        ]);
+
         $user = $request->user();
         $mode = $user->mode ?? Quiz::TYPES['BINARY'];
+        $providedIds = $request->input('questionIds');
 
-        $questions = Question::query()
-            ->where('type', $mode)
-            ->with('answers')
-            ->inRandomOrder()
-            ->limit(Quiz::SESSION_SIZE)
-            ->get();
+        $questions = collect();
+
+        if (! empty($providedIds)) {
+            $fetched = Question::query()
+                ->whereIn('id', $providedIds)
+                ->where('type', $mode)
+                ->with('answers')
+                ->get()
+                ->keyBy('id');
+
+            $questions = collect($providedIds)
+                ->map(fn ($id) => $fetched->get($id))
+                ->filter()
+                ->values();
+        }
+
+        if ($questions->isEmpty()) {
+            $questions = Question::query()
+                ->where('type', $mode)
+                ->with('answers')
+                ->inRandomOrder()
+                ->limit(Quiz::SESSION_SIZE)
+                ->get();
+        }
 
         $session = UserQuiz::create([
             'user_id' => $user->id,
             'mode' => $mode,
             'total_questions' => $questions->count(),
+            'question_ids' => $questions->pluck('id')->all(),
         ]);
 
         return response()->json([

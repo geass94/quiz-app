@@ -15,6 +15,11 @@ class Answer extends Model
         'content',
     ];
 
+    public function question()
+    {
+        return $this->belongsTo(Question::class);
+    }
+
     public static function isCorrect(int $id): bool
     {
         return Answer::query()->find($id)->is_correct;

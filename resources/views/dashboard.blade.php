@@ -12,7 +12,7 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div id="start-card" class="session-card">
+                <div id="start-card" class="session-card{{ $resume ? ' is-hidden' : '' }}">
                     <h2>Famous Quote Quiz</h2>
                     <p>Mode: <strong>{{ $mode }}</strong></p>
                     <p>You have <span id="time-display"></span> to complete the quiz.</p>
@@ -43,6 +43,7 @@
 
     <script>
         const SESSION_DURATION = {{ (int) $duration }};
+        const RESUME = @json($resume);
 
         let sessionId = null;
         let timeLeft = SESSION_DURATION;
@@ -75,18 +76,22 @@
 
         startButton.addEventListener('click', startSession);
         submitButton.addEventListener('click', submitSession);
-        restartButton.addEventListener('click', () => window.location.reload());
+        restartButton.addEventListener('click', restartSession);
 
-        async function startSession() {
+        async function startSession(questionIds) {
             startButton.disabled = true;
             try {
-                const res = await axios.post('/ajax/session/start');
+                const payload = questionIds && questionIds.length ? { questionIds } : {};
+                const res = await axios.post('/ajax/session/start', payload);
                 const data = res.data.data;
                 sessionId = data.sessionId;
                 timeLeft = data.duration;
                 questions = data.questions;
+                timedOut = false;
+                submitButton.disabled = false;
 
                 hide(startCard);
+                hide(resultsCard);
                 show(quizContainer);
                 renderQuestions();
                 renderTimer();
@@ -95,6 +100,22 @@
                 console.log(e);
                 startButton.disabled = false;
             }
+        }
+
+        function restartSession() {
+            restartButton.disabled = true;
+            const previousQuestionIds = questions.map((q) => q.id);
+            hide(resultsCard);
+            questionsContainer.innerHTML = '';
+            sessionId = null;
+            timeLeft = SESSION_DURATION;
+            timedOut = false;
+            timerEl.classList.remove('warn', 'danger');
+            document.getElementById('result-heading').textContent = 'Session complete';
+            hide(document.getElementById('result-subheading'));
+            startSession(previousQuestionIds).finally(() => {
+                restartButton.disabled = false;
+            });
         }
 
         function renderQuestions() {
@@ -224,5 +245,53 @@
                 submitButton.disabled = false;
             }
         }
+
+        function replayAnsweredQuestion(answered) {
+            const selector = `button.answer-button[data-question-id="${answered.questionId}"][data-answer-id="${answered.answerId}"]`;
+            const btn = questionsContainer.querySelector(selector);
+            if (!btn) return;
+            const siblings = btn.parentNode.querySelectorAll('.answer-button');
+            siblings.forEach((b) => {
+                b.disabled = true;
+                b.classList.remove('selected');
+            });
+            btn.classList.add('selected');
+            showFeedback(btn.closest('.question-container'), !!answered.isCorrect, answered.correctAnswer);
+        }
+
+        function bootResume() {
+            if (!RESUME) return;
+
+            if (RESUME.status === 'resume') {
+                sessionId = RESUME.sessionId;
+                timeLeft = Math.max(parseInt(RESUME.timeLeft, 10), 1);
+                questions = RESUME.questions;
+                timedOut = false;
+                startButton.disabled = true;
+                submitButton.disabled = false;
+                hide(startCard);
+                show(quizContainer);
+                renderQuestions();
+                (RESUME.answered || []).forEach(replayAnsweredQuestion);
+                renderTimer();
+                intervalId = setInterval(tickTimer, 1000);
+                return;
+            }
+
+            if (RESUME.status === 'completed') {
+                questions = (RESUME.previousQuestionIds || []).map((id) => ({ id }));
+                timedOut = true;
+                hide(startCard);
+                document.getElementById('result-heading').textContent = "Time's up!";
+                show(document.getElementById('result-subheading'));
+                document.getElementById('result-score').textContent = RESUME.score;
+                document.getElementById('result-total').textContent = RESUME.totalQuestions;
+                document.getElementById('result-unanswered').textContent = RESUME.unanswered;
+                document.getElementById('result-time').textContent = fmtTime(RESUME.timeSpent);
+                show(resultsCard);
+            }
+        }
+
+        bootResume();
     </script>
 </x-app-layout>
