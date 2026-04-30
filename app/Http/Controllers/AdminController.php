@@ -2,20 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\UserQuiz;
+use App\Services\SessionService;
 
 class AdminController extends Controller
 {
+    public function __construct(private SessionService $sessions) {}
+
     public function history()
     {
-        $sessions = UserQuiz::query()
-            ->with('user')
-            ->whereNotNull('submitted_at')
-            ->orderByDesc('submitted_at')
-            ->paginate(20);
-
         return view('admin.history', [
-            'sessions' => $sessions,
+            'sessions' => $this->sessions->history(),
         ]);
     }
 }

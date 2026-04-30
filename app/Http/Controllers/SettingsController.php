@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Quiz\Quiz;
-use App\Models\UserQuiz;
+use App\Services\SettingsService;
 use Illuminate\Http\Request;
 
 class SettingsController extends Controller
 {
+    public function __construct(private SettingsService $settings) {}
+
     public function edit(Request $request)
     {
         return view('settings', [
@@ -22,17 +24,7 @@ class SettingsController extends Controller
             'mode' => ['required', 'in:'.implode(',', Quiz::TYPES)],
         ]);
 
-        $user = $request->user();
-        $newMode = $request->input('mode');
-
-        if ($user->mode !== $newMode) {
-            UserQuiz::query()
-                ->where('user_id', $user->id)
-                ->whereNull('time_left')
-                ->delete();
-
-            $user->update(['mode' => $newMode]);
-        }
+        $this->settings->changeMode($request->user(), $request->input('mode'));
 
         return redirect()
             ->route('settings.edit')

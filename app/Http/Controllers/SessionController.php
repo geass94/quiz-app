@@ -3,15 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Data\QuestionData;
-use App\Models\Quiz\Answer;
-use App\Models\Quiz\Question;
 use App\Models\Quiz\Quiz;
-use App\Models\UserQuiz;
-use App\Models\UserQuizAnswer;
+use App\Services\SessionService;
 use Illuminate\Http\Request;
 
 class SessionController extends Controller
 {
+    public function __construct(private SessionService $sessions) {}
+
     public function start(Request $request)
     {
         $request->validate([
@@ -19,50 +18,19 @@ class SessionController extends Controller
             'questionIds.*' => 'integer',
         ]);
 
-        $user = $request->user();
-        $mode = $user->mode ?? Quiz::TYPES['BINARY'];
-        $providedIds = $request->input('questionIds');
-
-        $questions = collect();
-
-        if (! empty($providedIds)) {
-            $fetched = Question::query()
-                ->whereIn('id', $providedIds)
-                ->where('type', $mode)
-                ->with('answers')
-                ->get()
-                ->keyBy('id');
-
-            $questions = collect($providedIds)
-                ->map(fn ($id) => $fetched->get($id))
-                ->filter()
-                ->values();
-        }
-
-        if ($questions->isEmpty()) {
-            $questions = Question::query()
-                ->where('type', $mode)
-                ->with('answers')
-                ->inRandomOrder()
-                ->limit(Quiz::SESSION_SIZE)
-                ->get();
-        }
-
-        $session = UserQuiz::create([
-            'user_id' => $user->id,
-            'mode' => $mode,
-            'total_questions' => $questions->count(),
-            'question_ids' => $questions->pluck('id')->all(),
-        ]);
+        $result = $this->sessions->startSession(
+            $request->user(),
+            $request->input('questionIds')
+        );
 
         return response()->json([
             'error' => false,
             'message' => 'Good Luck!',
             'data' => [
-                'sessionId' => $session->id,
+                'sessionId' => $result['session']->id,
                 'duration' => Quiz::SESSION_DURATION,
-                'totalQuestions' => $questions->count(),
-                'questions' => QuestionData::collection($questions),
+                'totalQuestions' => $result['questions']->count(),
+                'questions' => QuestionData::collection($result['questions']),
             ],
         ]);
     }
@@ -75,47 +43,16 @@ class SessionController extends Controller
             'answerId' => 'required|integer',
         ]);
 
-        $session = UserQuiz::query()->findOrFail($request->input('sessionId'));
-
-        if ($session->user_id !== $request->user()->id) {
-            abort(403);
-        }
-
-        if ($session->submitted_at !== null) {
-            abort(409, 'Session already submitted');
-        }
-
-        $questionId = (int) $request->input('questionId');
-        $answerId = (int) $request->input('answerId');
-
-        $answer = Answer::query()->find($answerId);
-        if (! $answer || $answer->question_id !== $questionId) {
-            abort(422, 'Invalid answer');
-        }
-
-        $alreadyAnswered = UserQuizAnswer::query()
-            ->where('user_quiz_id', $session->id)
-            ->whereHas('answer', fn ($q) => $q->where('question_id', $questionId))
-            ->exists();
-
-        if (! $alreadyAnswered) {
-            UserQuizAnswer::create([
-                'user_quiz_id' => $session->id,
-                'answer_id' => $answerId,
-            ]);
-        }
-
-        $correctAnswer = Answer::query()
-            ->where('question_id', $questionId)
-            ->where('is_correct', true)
-            ->first();
+        $result = $this->sessions->recordAnswer(
+            $request->user(),
+            (int) $request->input('sessionId'),
+            (int) $request->input('questionId'),
+            (int) $request->input('answerId'),
+        );
 
         return response()->json([
             'error' => false,
-            'data' => [
-                'correct' => (bool) $answer->is_correct,
-                'correctAnswer' => $correctAnswer?->content,
-            ],
+            'data' => $result,
         ]);
     }
 
@@ -126,31 +63,11 @@ class SessionController extends Controller
             'timeSpent' => 'nullable|integer|min:0',
         ]);
 
-        $session = UserQuiz::query()->findOrFail($request->input('sessionId'));
-
-        if ($session->user_id !== $request->user()->id) {
-            abort(403);
-        }
-
-        if ($session->submitted_at !== null) {
-            abort(409, 'Session already submitted');
-        }
-
-        $answers = UserQuizAnswer::query()
-            ->with('answer')
-            ->where('user_quiz_id', $session->id)
-            ->get();
-
-        $score = $answers->filter(fn ($a) => $a->answer && $a->answer->is_correct)->count();
-        $answeredCount = $answers->count();
-
-        $timeSpent = (int) $request->input('timeSpent', 0);
-        $session->update([
-            'score' => $score,
-            'time_left' => max(Quiz::SESSION_DURATION - $timeSpent, 0),
-            'unanswered_count' => max($session->total_questions - $answeredCount, 0),
-            'submitted_at' => now(),
-        ]);
+        $session = $this->sessions->submitSession(
+            $request->user(),
+            (int) $request->input('sessionId'),
+            (int) $request->input('timeSpent', 0),
+        );
 
         return response()->json([
             'error' => false,
@@ -159,7 +76,7 @@ class SessionController extends Controller
                 'score' => $session->score,
                 'totalQuestions' => $session->total_questions,
                 'unanswered' => $session->unanswered_count,
-                'timeSpent' => $timeSpent,
+                'timeSpent' => Quiz::SESSION_DURATION - (int) $session->time_left,
             ],
         ]);
     }
