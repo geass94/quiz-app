@@ -14,9 +14,8 @@ class DashboardController extends Controller
         $mode = $request->user()->mode ?? Quiz::TYPES['BINARY'];
 
         return view('dashboard', [
-            'quizzes' => QuizData::collect(
+            'quizzes' => QuizData::collection(
                 Quiz::query()->where('type', $mode)->get(),
-                DataCollection::class
             )->toJson(),
         ]);
     }

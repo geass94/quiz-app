@@ -113,7 +113,7 @@ class QuizController extends Controller
         return response()->json([
             'error' => false,
             'message' => 'Submitted',
-            'data' => LeaderboardData::collect($leaderboard, DataCollection::class),
+            'data' => LeaderboardData::collection($leaderboard),
         ]);
     }
 
