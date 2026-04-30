@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Quiz\Quiz;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -15,7 +16,7 @@ return new class extends Migration
     {
         Schema::create('quizzes', function (Blueprint $table) {
             $table->id();
-            $table->string('type')->default(\App\Models\Quiz\Quiz::TYPES['BINARY']);
+            $table->string('type')->default(Quiz::TYPES['BINARY']);
             $table->string('name');
             $table->integer('time')->default(300);
             $table->timestamps();

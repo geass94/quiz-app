@@ -10,7 +10,7 @@ class IsAdmin
 {
     public function handle(Request $request, Closure $next)
     {
-        if (!Auth::check() || !Auth::user()->is_admin) {
+        if (! Auth::check() || ! Auth::user()->is_admin) {
             abort(403);
         }
 

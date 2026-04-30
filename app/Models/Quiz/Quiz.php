@@ -8,15 +8,16 @@ use Illuminate\Database\Eloquent\Model;
 class Quiz extends Model
 {
     use HasFactory;
+
     const TYPES = [
         'BINARY' => 'BINARY',
-        'MULTI' => 'MULTI'
+        'MULTI' => 'MULTI',
     ];
 
     protected $fillable = [
         'name',
         'type',
-        'time'
+        'time',
     ];
 
     public function setCompletedAttribute($value = false)

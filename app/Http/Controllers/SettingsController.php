@@ -19,7 +19,7 @@ class SettingsController extends Controller
     public function update(Request $request)
     {
         $request->validate([
-            'mode' => ['required', 'in:' . implode(',', Quiz::TYPES)],
+            'mode' => ['required', 'in:'.implode(',', Quiz::TYPES)],
         ]);
 
         $user = $request->user();

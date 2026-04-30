@@ -11,6 +11,6 @@ class UserQuizAnswer extends Model
 
     protected $fillable = [
         'user_quiz_id',
-        'answer_id'
+        'answer_id',
     ];
 }

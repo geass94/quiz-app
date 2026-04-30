@@ -6,7 +6,6 @@ use App\Models\Quiz\Answer;
 use App\Models\Quiz\Question;
 use App\Models\Quiz\Quiz;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -24,7 +23,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'admin',
             'email' => 'admin@local.host',
             'password' => Hash::make('1234'),
-            'is_admin' => true
+            'is_admin' => true,
         ]);
         for ($i = 0; $i < 10; $i++) {
             $quiz = Quiz::create([
@@ -36,25 +35,26 @@ class DatabaseSeeder extends Seeder
             for ($qi = 0; $qi < 10; $qi++) {
                 $question = Question::create([
                     'quiz_id' => $quiz->id,
-                    'content' => "This is question $qi"
+                    'content' => "This is question $qi",
                 ]);
                 if ($answerCount === 2) {
                     Answer::create([
                         'question_id' => $question->id,
-                        'content' => "Yes",
-                        'is_correct' => false
+                        'content' => 'Yes',
+                        'is_correct' => false,
                     ]);
                     Answer::create([
                         'question_id' => $question->id,
-                        'content' => "No",
-                        'is_correct' => true
+                        'content' => 'No',
+                        'is_correct' => true,
                     ]);
                 } else {
+                    $correctIndex = random_int(0, $answerCount - 1);
                     for ($ai = 0; $ai < $answerCount; $ai++) {
                         Answer::create([
                             'question_id' => $question->id,
                             'content' => "Answer $ai for Question $qi",
-                            'is_correct' => $i % 2 === 0
+                            'is_correct' => $ai === $correctIndex,
                         ]);
                     }
                 }

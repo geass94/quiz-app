@@ -14,7 +14,7 @@ class UserQuiz extends Model
         'quiz_id',
         'user_id',
         'score',
-        'time_left'
+        'time_left',
     ];
 
     public function quiz()
@@ -31,5 +31,4 @@ class UserQuiz extends Model
     {
         return $this->belongsTo(User::class);
     }
-
 }

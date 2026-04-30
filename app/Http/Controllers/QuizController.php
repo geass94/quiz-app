@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\LeaderboardResource;
-use App\Http\Resources\QuizResource;
+use App\Data\LeaderboardData;
+use App\Data\QuizData;
 use App\Models\Quiz\Answer;
 use App\Models\Quiz\Question;
 use App\Models\Quiz\Quiz;
@@ -11,6 +11,7 @@ use App\Models\UserQuiz;
 use App\Models\UserQuizAnswer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Spatie\LaravelData\DataCollection;
 
 class QuizController extends Controller
 {
@@ -30,52 +31,55 @@ class QuizController extends Controller
             $quiz = Quiz::create([
                 'name' => $name,
                 'type' => $type,
-                'time' => $request->input('duration', 300)
+                'time' => $request->input('duration', 300),
             ]);
             foreach ($questions as $question) {
                 $q = Question::create([
                     'quiz_id' => $quiz->id,
-                    'content' => $question['question']
+                    'content' => $question['question'],
                 ]);
-                if (!isset($question['answers'])) throw new \Exception('Answers are not provided');
+                if (! isset($question['answers'])) {
+                    throw new \Exception('Answers are not provided');
+                }
                 $answers = $question['answers'];
                 foreach ($answers as $answer) {
                     Answer::create([
                         'question_id' => $q->id,
                         'is_correct' => $answer['isCorrect'],
-                        'content' => $answer['answer']
+                        'content' => $answer['answer'],
                     ]);
                 }
             }
             DB::commit();
+
             return response()->json([
                 'error' => false,
                 'message' => 'Quiz Saved!',
-                'data' => $quiz
+                'data' => $quiz,
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
+
             return response()->json([
                 'error' => true,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ]);
         }
     }
 
     public function start(Request $request)
     {
-        $userQuiz = UserQuiz::updateOrCreate(['quiz_id' => $request->input('quizId'), 'user_id' => $request->user()->id],[
+        $userQuiz = UserQuiz::updateOrCreate(['quiz_id' => $request->input('quizId'), 'user_id' => $request->user()->id], [
             'quiz_id' => $request->input('quizId'),
-            'user_id' => $request->user()->id
+            'user_id' => $request->user()->id,
         ]);
 
         return response()->json([
             'error' => false,
             'message' => 'Good Luck!',
-            'data' => $userQuiz
+            'data' => $userQuiz,
         ]);
     }
-
 
     public function submit(Request $request)
     {
@@ -86,14 +90,16 @@ class QuizController extends Controller
         foreach ($answers as $answer) {
             UserQuizAnswer::create([
                 'user_quiz_id' => $request->input('userQuizId'),
-                'answer_id' => $answer['answerId']
+                'answer_id' => $answer['answerId'],
             ]);
-            if (Answer::isCorrect($answer['answerId'])) $score++;
+            if (Answer::isCorrect($answer['answerId'])) {
+                $score++;
+            }
         }
 
         $userQuiz->update([
             'score' => $score,
-            'time_left' => $quiz->time - $request->input('timeSpent', 0)
+            'time_left' => $quiz->time - $request->input('timeSpent', 0),
         ]);
         logger('Leaderboard', [
             'quizId' => $quiz->id,
@@ -107,17 +113,18 @@ class QuizController extends Controller
         return response()->json([
             'error' => false,
             'message' => 'Submitted',
-            'data' => LeaderboardResource::collection($leaderboard)
+            'data' => LeaderboardData::collect($leaderboard, DataCollection::class),
         ]);
     }
 
     public function showOne(int $quizId)
     {
-        $quiz = Quiz::query()->where('id', '=', $quizId)->with(['questions' => function($q) {
+        $quiz = Quiz::query()->where('id', '=', $quizId)->with(['questions' => function ($q) {
             return $q->with('answers');
         }])->first();
+
         return view('quiz')->with([
-            'quiz' => QuizResource::make($quiz)->toJson()
+            'quiz' => QuizData::from($quiz)->toJson(),
         ]);
     }
 }

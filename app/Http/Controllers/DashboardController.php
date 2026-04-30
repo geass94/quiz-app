@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\QuizResource;
+use App\Data\QuizData;
 use App\Models\Quiz\Quiz;
 use Illuminate\Http\Request;
+use Spatie\LaravelData\DataCollection;
 
 class DashboardController extends Controller
 {
@@ -13,8 +14,9 @@ class DashboardController extends Controller
         $mode = $request->user()->mode ?? Quiz::TYPES['BINARY'];
 
         return view('dashboard', [
-            'quizzes' => QuizResource::collection(
-                Quiz::query()->where('type', $mode)->get()
+            'quizzes' => QuizData::collect(
+                Quiz::query()->where('type', $mode)->get(),
+                DataCollection::class
             )->toJson(),
         ]);
     }
