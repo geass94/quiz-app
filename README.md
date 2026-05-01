@@ -52,6 +52,20 @@ DB_PASSWORD=quiz
 
 If your MySQL is bound to `127.0.0.1` only, allow connections from Docker by binding to `0.0.0.0` (or to the `docker0` bridge IP) in your MySQL config.
 
+### Optional — load the bundled SQL dump
+
+The repo ships with `Local_mysql-2026_05_01_12_51_57-dump.sql` at the project root: a snapshot of the schema plus seeded data (admin user, sample questions, and any history captured at dump time). Loading it is an alternative to running `migrate:fresh --seed` — useful if you want a pre-populated database immediately, or want to reproduce the exact dataset used during development.
+
+```bash
+# Native MySQL client
+mysql -u quiz -p quiz_app < Local_mysql-2026_05_01_12_51_57-dump.sql
+
+# Or against a Dockerised MySQL on the host
+mysql -h 127.0.0.1 -u quiz -p quiz_app < Local_mysql-2026_05_01_12_51_57-dump.sql
+```
+
+If you load the dump, **skip** `php artisan migrate:fresh --seed` in the next step — the dump already contains the schema and seed data. You still need `composer install`, `key:generate`, and the npm steps.
+
 ## 3a. Run with Docker
 
 ```bash
