@@ -128,6 +128,7 @@ docker compose exec app npm run dev
 
 ## Project notes
 
+- **Authoring:** the frontend was built with AI assistance; the backend was written by me and reviewed by AI.
 - **Frontend:** Blade + vanilla ES6, bundled by Laravel Mix into `public/css/` and `public/js/`. Tailwind drives the chrome; `resources/css/quiz.css` covers everything specific to the quiz UI.
 - **Architecture:** thin controllers; all business logic lives under `app/Services/` (`SessionService`, `QuizService`, `LeaderboardService`, `SettingsService`).
 - **Data shaping:** Spatie Laravel Data classes under `app/Data/` replace traditional API resources for JSON responses.
