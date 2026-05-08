@@ -55,7 +55,7 @@ class QuizService
             }
 
             if ($correctCount !== 1) {
-                abort(422, 'Question '.($i + 1).' must havassertValidQuestionsShapee exactly one correct answer.');
+                abort(422, 'Question '.($i + 1).' must have exactly one correct answer.');
             }
             if ($type === Quiz::TYPES['BINARY'] && $count !== 2) {
                 abort(422, 'Binary question '.($i + 1).' must have exactly 2 answers.');
